@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Parser output
+output.csv
+output_new.csv
+teams_list.json
+
+# Sample data (ignored for clean repo)
+SampleData/
+
+# PWA build
+pwa/dist/
+pwa/node_modules/
+
+# Executable / local test
+run_parser.bat
+run_pwa.bat
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

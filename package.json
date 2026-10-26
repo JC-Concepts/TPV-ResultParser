@@ -1,0 +1,9 @@
+{
+  "name": "TPV Parser PWA",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "echo 'Static build complete (React/Vue build would output to dist/)'",
+    "dev": "python -m http.server 8000 --directory pwa"
+  },
+  "devDependencies": {}
+}
