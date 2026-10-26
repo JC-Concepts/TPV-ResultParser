@@ -3,11 +3,14 @@ name: Process TPV Results
 on:
   push:
     paths:
-      - 'SampleData/**'
       - 'parser/**'
-  schedule:
-    - cron: '0 6 * * *'
+      - '.github/workflows/**'
   workflow_dispatch:
+    inputs:
+      file_path:
+        description: 'CSV file path to process'
+        required: true
+        default: 'SampleData/Sample Data - Raw.csv'
 
 jobs:
   process:
@@ -22,7 +25,7 @@ jobs:
         run: |
           python .github/scripts/scrape_teams.py || echo "Scrape skipped (optional)"
       - name: Run parser
-        run: python parser/process.py SampleData/"Sample Data - Raw.csv" output.csv
+        run: python parser/process.py "${{ github.event.inputs.file_path || 'SampleData/Sample Data - Raw.csv' }}" output.csv
       - name: Upload result
         uses: actions/upload-artifact@v4
         with:
