@@ -25,6 +25,9 @@ output.csv
 output_new.csv
 teams_list.json
 
+# Sample data excluded from repo
+SampleData/
+
 # PWA build
 pwa/dist/
 pwa/node_modules/
