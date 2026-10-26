@@ -1,18 +1,24 @@
 name: Process TPV Results
 
 on:
-  push:
-    paths:
-      - 'parser/**'
-      - '.github/workflows/**'
-  schedule:
-    - cron: '0 6 * * *'
   workflow_dispatch:
     inputs:
       file_path:
-        description: 'CSV file path to process'
+        description: 'Path to a CSV already committed in this repository'
         required: true
-        default: 'SampleData/Sample Data - Raw.csv'
+        type: string
+      race_name:
+        description: 'Race name'
+        required: true
+        type: string
+      rename_from:
+        description: 'Team name to replace (optional)'
+        required: false
+        type: string
+      rename_to:
+        description: 'Replacement team name (optional)'
+        required: false
+        type: string
 
 jobs:
   process:
@@ -27,9 +33,14 @@ jobs:
         run: |
           python .github/scripts/scrape_teams.py || echo "Scrape skipped (optional)"
       - name: Run parser
-        run: python parser/process.py "${{ github.event.inputs.file_path || 'SampleData/Sample Data - Raw.csv' }}" output.csv
+        env:
+          INPUT_FILE_PATH: ${{ inputs.file_path }}
+          RACE_NAME: ${{ inputs.race_name }}
+          RENAME_FROM: ${{ inputs.rename_from }}
+          RENAME_TO: ${{ inputs.rename_to }}
+        run: python parser/process.py "$INPUT_FILE_PATH" output_new.csv "$RACE_NAME" "$RENAME_FROM=$RENAME_TO"
       - name: Upload result
         uses: actions/upload-artifact@v4
         with:
           name: upload-ready-csv
-          path: output.csv
+          path: output_new.csv
