@@ -12,7 +12,7 @@ A Progressive Web App (PWA) and Python parser for processing Training Peaks Virt
 ## Project Structure
 ```
 parser/          Python parser script
-pwa/             PWA static site (Tailwind)
+index.html       PWA static site (Tailwind)
 tests/           Unit tests
 .github/         Workflows and scraper
 SampleData/      Raw and upload-ready CSV samples
@@ -27,7 +27,7 @@ python parser/process.py "SampleData/Sample Data - Raw.csv" output.csv
 python parser/process.py input.csv output.csv "" "" "R1 Long" "Team Lou=Team Lou Dev"
 
 # Run PWA locally
-python -m http.server 8000 --directory pwa
+python -m http.server 8000
 ```
 
 ## Testing
@@ -36,4 +36,4 @@ python -m unittest discover -s tests -p "test_*.py"
 ```
 
 ## Deployment
-Hosted on GitHub Pages (`pwa/` folder). Parser runs via GitHub Actions.
+Hosted on GitHub Pages from the repository root. Parser runs via GitHub Actions.
