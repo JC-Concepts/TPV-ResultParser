@@ -5,6 +5,8 @@ on:
     paths:
       - 'parser/**'
       - '.github/workflows/**'
+  schedule:
+    - cron: '0 6 * * *'
   workflow_dispatch:
     inputs:
       file_path:
