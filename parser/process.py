@@ -43,7 +43,9 @@ def process_csv(input_path: Path, output_path: Path, race_name: str = "", rename
     if header_idx is None:
         raise ValueError("Could not find Overall Individual Results header with UID column")
 
-    data_rows = rows[header_idx + 1:]
+    print(f"Header index: {header_idx}, Header: {header}")
+    data_rows = rows[header_idx + 1:] if header_idx is not None else []
+    print(f"Data rows count: {len(data_rows)}")
     filtered = []
     for row in data_rows:
         if not row or all(cell.strip() == "" for cell in row):
@@ -55,7 +57,9 @@ def process_csv(input_path: Path, output_path: Path, race_name: str = "", rename
         except ValueError:
             uid_idx = 11
         uid = row[uid_idx].strip() if uid_idx < len(row) else ""
+        print(f"Row {len(filtered)}: uid_idx={uid_idx}, uid='{uid}', len={len(row)}, header_len={len(header)}")
         if uid == "":
+            print("  Skipped: empty uid")
             continue
         filtered.append(row)
 
@@ -63,26 +67,37 @@ def process_csv(input_path: Path, output_path: Path, race_name: str = "", rename
     uid_idx = header.index("UID") if "UID" in header else 11
     name_idx = header.index("Name") if "Name" in header else 4
 
-    # Apply optional rename before grouping
-    for row in filtered:
-        team = row[team_idx].strip() if team_idx < len(row) else ""
-        if team in rename_map:
-            row[team_idx] = rename_map[team]
-
-    team_has_human = {}
+    # Group by original team (before rename) to detect humans
+    original_team_has_human = {}
     for row in filtered:
         team = row[team_idx].strip() if team_idx < len(row) else ""
         uid = row[uid_idx].strip() if uid_idx < len(row) else ""
-        if team not in team_has_human:
-            team_has_human[team] = False
+        if team not in original_team_has_human:
+            original_team_has_human[team] = False
         if not uid.startswith("Bot") and uid != "":
-            team_has_human[team] = True
+            original_team_has_human[team] = True
 
+    print(f"Filtered rows: {len(filtered)}")
+    print(f"Original team humans: {original_team_has_human}")
     result_rows = [header]
     for row in filtered:
-        team = row[team_idx].strip() if team_idx < len(row) else ""
-        if team_has_human.get(team, False):
+        # Find original team name before rename
+        current_team = row[team_idx].strip() if team_idx < len(row) else ""
+        original_name = current_team
+        for k, v in rename_map.items():
+            if v == current_team:
+                original_name = k
+                break
+        if original_team_has_human.get(original_name, False):
             result_rows.append(row)
+
+    # Apply rename to included rows
+    for row in result_rows[1:]:
+        team = row[team_idx].strip() if team_idx < len(row) else ""
+        for k, v in rename_map.items():
+            if team == k:
+                row[team_idx] = v
+                break
 
     # Rename unknown teams
     team_first_human = {}
@@ -90,7 +105,7 @@ def process_csv(input_path: Path, output_path: Path, race_name: str = "", rename
         team = row[team_idx].strip() if team_idx < len(row) else ""
         uid = row[uid_idx].strip() if uid_idx < len(row) else ""
         name = row[name_idx].strip() if name_idx < len(row) else ""
-        if team_has_human.get(team, False) and team not in team_first_human:
+        if original_team_has_human.get(team, False) and team not in team_first_human:
             if not uid.startswith("Bot") and uid != "":
                 team_first_human[team] = name
 
