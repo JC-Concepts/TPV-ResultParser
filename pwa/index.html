@@ -200,10 +200,8 @@
       const race = document.getElementById('raceName').value || 'Race';
       const fromTeam = document.getElementById('renameFrom').value;
       const toTeam = document.getElementById('renameTo').value;
-      let cmd = `python parser/process.py "SampleData/Sample Data - Raw.csv" output_new.csv`;
-      if (race) cmd += ` "" "" "" "${race}"`;
-      if (fromTeam && toTeam) cmd += ` "${fromTeam}=${toTeam}"`;
-      alert('Would run: ' + cmd);
+      const url = `https://github.com/JC-Concepts/TPV-ResultParser/actions/workflows/process.yml`;
+      alert('To trigger the GitHub Action, visit: ' + url + '\nRace: ' + race + (fromTeam && toTeam ? '\nRename: ' + fromTeam + ' -> ' + toTeam : ''));
     }
 
     function downloadResult() {
