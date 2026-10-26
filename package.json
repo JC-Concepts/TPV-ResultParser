@@ -1,9 +1,12 @@
 {
   "name": "TPV Parser PWA",
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
-    "build": "echo 'Static build complete (React/Vue build would output to dist/)'",
-    "dev": "python -m http.server 8000 --directory pwa"
+    "dev": "python -m http.server 8000",
+    "test": "node --test tests/browser-parser.test.js"
   },
-  "devDependencies": {}
+  "dependencies": {
+    "jszip": "3.10.1"
+  }
 }

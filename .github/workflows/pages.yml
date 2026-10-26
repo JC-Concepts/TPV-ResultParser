@@ -3,6 +3,10 @@ name: Deploy PWA to GitHub Pages
 on:
   push:
     branches: [main]
+  workflow_run:
+    workflows: ["Update TPV Team List"]
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: read
@@ -11,6 +15,7 @@ permissions:
 
 jobs:
   deploy:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -20,8 +25,14 @@ jobs:
       - uses: actions/configure-pages@v5
       - name: Prepare site
         run: |
-          mkdir _site
+          mkdir -p _site/parser _site/vendor
           cp index.html _site/index.html
+          cp app.js _site/app.js
+          cp parser/browser-parser.js _site/parser/browser-parser.js
+          cp parser/browser-file-loader.js _site/parser/browser-file-loader.js
+          cp vendor/jszip.min.js _site/vendor/jszip.min.js
+          cp vendor/LICENSE-jszip.markdown _site/vendor/LICENSE-jszip.markdown
+          if [ -f teams_list.json ]; then cp teams_list.json _site/teams_list.json; fi
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

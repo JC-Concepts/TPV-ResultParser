@@ -23,7 +23,6 @@ wheels/
 # Parser output
 output.csv
 output_new.csv
-teams_list.json
 
 # Sample data excluded from repo
 SampleData/
@@ -31,6 +30,7 @@ SampleData/
 # PWA build
 pwa/dist/
 pwa/node_modules/
+node_modules/
 
 # Executable / local test
 run_parser.bat

@@ -1,39 +1,54 @@
-# TPV Result Parser — Architecture (Updated)
+# TPV Result Parser Architecture
 
 ## Purpose
-Process Training Peaks Virtual race results (CSV / ZIP batches) into team-scored output CSVs for a PWA hosted on GitHub Pages.
 
-## Components (Implemented)
+Prepare TrainingPeaks Virtual race results as upload-ready individual-result CSVs and calculate team time-trial standings without sending race files to a backend.
 
-1. **Parser Engine** (`parser/`)
-   - Reads raw CSV, filters "Overall Individual Results" by UID.
-   - Keeps only teams with at least one non-`Bot` UID.
-   - Applies optional team rename (`rename_map`) and race naming (`race_name`).
-   - Cross-checks team names against `teams_list.json` (1177 teams from `/api/teams`).
-   - Unknown teams renamed to `Team FirstName LastName`.
-   - Outputs `output_new.csv` and race-specific `results_{Race}.csv` sorted by time.
+## Components
 
-2. **PWA Site** (`pwa/`)
-   - Modern dark/light theme toggle (RealVelo-inspired).
-   - Collapsible left sidebar (Results / Upload tabs).
-   - Results page loads `output_new.csv` dynamically; supports race tabs.
-   - Upload page: file picker, Race Name input, optional team rename fields, Process/Download buttons.
+### Static PWA
 
-3. **Testing** (`tests/`)
-   - Unit tests for parser rules, team loading, race naming, rename mapping.
+- `index.html` is the GitHub Pages entry point.
+- `app.js` handles navigation, the local file picker, browser rendering, race tabs, and downloads.
+- `parser/browser-file-loader.js` reads CSV files and extracts CSV entries from ZIP archives in memory.
+- `vendor/jszip.min.js` is served with the site; ZIP processing does not require a remote service.
 
-4. **GitHub Action** (`.github/workflows/process.yml`)
-   - Runs parser on push; scrapes `/api/teams` daily (`cron: '0 6 * * *'`) to update `teams_list.json`.
+### Browser parser
 
-5. **Local Executable** (`run_parser.bat`, `run_pwa.bat`)
-   - `.bat` files for local parser execution and PWA server.
+`parser/browser-parser.js` parses quoted CSV data, locates the `OVERALL INDIVIDUAL RESULTS` section, and ignores other sections. It retains all rows for a team containing at least one non-bot UID and excludes bot-only teams. Optional team renaming is applied before the official-team-list fallback. When the list is available, an unlisted team is named `Team FirstName LastName` using its fastest human finisher.
 
-## Data Flow
+The parser returns two related views:
+
+1. An upload-ready CSV with the original individual-results header and every qualifying rider row, bots included.
+2. Team standings shown in the Results page. The normal score is the third finisher's time. If the top three are bots and the first human is more than 10 seconds behind the third finisher, the scoring place moves down one finisher at a time until the first human is within 10 seconds of that finisher. A team without a human finisher or at least three finishers is unscored.
+
+The team-time-trial score is not written into the upload-ready CSV because that file preserves the source individual-results schema.
+
+### Team list and deployment
+
+- `.github/workflows/update-teams.yml` refreshes `teams_list.json` from `https://tpvirtualhub.com/api/teams`.
+- `.github/workflows/pages.yml` deploys the static app and republishes the site after a successful team-list refresh.
+- The PWA only fetches the public team-name JSON. It never receives or needs a GitHub credential.
+
+### Tests and legacy code
+
+- `tests/browser-parser.test.js` tests CSV parsing, team filtering, rename behavior, scoring, and ZIP extraction. Where the local sample data exists, it is the integration-test source of truth.
+- `parser/process.py` and `.github/workflows/process.yml` remain as a separate legacy command-line/manual workflow. The PWA does not invoke them.
+
+## Data flow
+
+```text
+Local CSV / ZIP
+      |
+      v
+Browser file loader -> Browser CSV parser -> Results and TTT standings
+                                             |
+                                             +-> CSV download (one race)
+                                             +-> ZIP download (multiple races)
 ```
-Raw CSV / ZIP → Parser (filter + rename + race) → output_new.csv + results_{Race}.csv
-```
 
-## Constraints
-- Parser logic fully implemented.
-- PWA uses static HTML + Tailwind; can be upgraded to React/Vue build.
-- Team list updated via GitHub Action scraping `/api/teams`.
+Race files remain in browser memory for the current page session. No upload endpoint, GitHub token, or Action dispatch is involved.
+
+## Local development
+
+On Windows, `run_pwa.bat` serves the repository root at `http://localhost:8000/`. The Node test suite is run with `npm install` followed by `npm test`.
