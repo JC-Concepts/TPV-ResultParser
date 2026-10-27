@@ -7,7 +7,7 @@ TPV Result Parser is a static Progressive Web App for preparing TrainingPeaks Vi
 - Process one or more CSV files, or CSV files inside a ZIP archive.
 - Read the `OVERALL INDIVIDUAL RESULTS` section and ignore team-only and intermediate-result sections.
 - Keep every rider (including bots) from teams that have at least one non-bot UID; omit teams with only bots.
-- Apply an optional team rename. If the official team list is available, unlisted teams are labeled `Team FirstName LastName` using the fastest human rider.
+- Apply an optional team rename. If the official team list is available, unlisted teams are labeled `Team FirstName LastName` using the fastest human rider; listed team names stay unchanged.
 - Show team time-trial standings separately from the upload-ready individual rider CSV.
 - Download one race as a CSV, or multiple races as a ZIP of processed CSV files.
 - Keep processed race tabs in the open browser session. Reprocessing the same race name appends and sorts the rider rows.
@@ -23,6 +23,7 @@ TPV Result Parser is a static Progressive Web App for preparing TrainingPeaks Vi
 - Unscored cases:
   - No human finisher.
   - Fewer than three finishers.
+- Team names: names found in the TPV team list (`teams_list.json`) stay unchanged; names not in that list become `Team FirstName LastName`.
 - The downloadable CSV preserves the original individual-results columns and all qualifying riders; standings are shown in the PWA.
 
 ```mermaid
@@ -36,6 +37,9 @@ flowchart TD
   F -->|No| E
   F -->|Yes| G[Score = selected bot time]
   H[No human finisher or < 3 finishers] --> I[Unscored]
+  J[Team name check] --> K{Name in teams_list.json?}
+  K -->|Yes| L[Keep original team name]
+  K -->|No| M[Rename to Team FirstName LastName]
 ```
 
 ## Use the hosted PWA
