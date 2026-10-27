@@ -13,45 +13,39 @@ TPV Result Parser is a static Progressive Web App for preparing TrainingPeaks Vi
 - Keep processed race tabs in the open browser session. Reprocessing the same race name appends and sorts the rider rows.
 - Use the TPV team list refreshed by the scheduled GitHub Action.
 
-For team standings, the default score is the third finisher's time. When the top three finishers are bots, the first human is checked against the third finisher. If the gap exceeds 10 seconds, the scoring place moves down one finisher at a time until the first human is within 10 seconds of the selected finisher. Teams without three finishers or a human finisher are displayed as unscored. The downloadable CSV preserves the original individual-results columns and all qualifying riders; standings are shown in the PWA.
+## Team standings scoring rules
+
+- Default score: the third finisher's time.
+- If the first three finishers are all bots:
+  - Check whether the first human is within 10 seconds of the third bot.
+  - If yes: use the third finisher's time.
+  - If no: remove the leading bot(s) one by one until the first human is within 10 seconds of the selected bot; use that bot's time.
+- Unscored cases:
+  - No human finisher.
+  - Fewer than three finishers.
+- The downloadable CSV preserves the original individual-results columns and all qualifying riders; standings are shown in the PWA.
+
+```mermaid
+flowchart TD
+  A[Team finishers sorted by time] --> B{First 3 finishers all bots?}
+  B -->|No| C[Score = 3rd finisher time]
+  B -->|Yes| D{First human within 10s of 3rd bot?}
+  D -->|Yes| C
+  D -->|No| E[Remove leading bot; check next bot]
+  E --> F{First human within 10s of selected bot?}
+  F -->|No| E
+  F -->|Yes| G[Score = selected bot time]
+  H[No human finisher or < 3 finishers] --> I[Unscored]
+```
 
 ## Use the hosted PWA
 
-Open the GitHub Pages site, select CSV and/or ZIP files, optionally enter a race name or team rename, then choose **Process**. Use **Download** after processing. Multiple CSVs in one batch are kept as separate race results; the download is a ZIP when the batch produces multiple races.
+Open https://jc-concepts.github.io/TPV-ResultParser/, select CSV and/or ZIP files, optionally enter a race name or team rename, then choose **Process**. Use **Download** after processing. Multiple CSVs in one batch are kept as separate race results; the download is a ZIP when the batch produces multiple races.
 
 Files are read and processed in browser memory. The app uses no GitHub token and sends no race-file contents to GitHub Actions.
 
-## Run locally on Windows
-
-Run `run_pwa.bat` from Explorer or a terminal. It starts a local static web server and opens `http://localhost:8000/`. The server is needed for browser module imports; users of the hosted site do not need to install Python or Node.
-
-## Tests
-
-With Node.js and npm installed, run:
-
-```text
-npm install
-npm test
-```
-
-The browser parser tests use `SampleData/Sample Data - Raw.csv` as the integration-test source when the local sample is present. `SampleData/` is intentionally not committed; tests still run the standalone CSV and scoring checks when sample files are absent.
-
 ## Team list refresh
 
-`.github/workflows/update-teams.yml` fetches team names from the TPV Hub API daily and updates `teams_list.json`. The Pages deployment also runs after that workflow succeeds so the refreshed list is published with the site. `teams_list.json` is public source data, not a secret.
-
-## Project files
-
-```text
-index.html                    Static PWA
-app.js                        Browser UI, file handling, rendering, and downloads
-parser/browser-parser.js      CSV parsing, team filtering/renaming, TTT scoring
-parser/browser-file-loader.js CSV and ZIP input loading
-vendor/jszip.min.js           Locally served ZIP support
-teams_list.json               TPV team names used by the browser
-parser/process.py             Legacy command-line parser
-tests/browser-parser.test.js  Browser parser and ZIP tests
-.github/workflows/            Pages deployment and scheduled team-list refresh
-```
+A scheduled job updates the team list once a day from the TPV Hub site. The updated list is saved as `teams_list.json` and published with the site so the PWA can recognize official team names.
 
 The manually dispatched `process.yml` workflow is separate from the PWA and cannot receive a file selected in the browser.
