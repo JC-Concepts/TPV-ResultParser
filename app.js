@@ -365,14 +365,17 @@ async function downloadResults() {
     return;
   }
 
+  const format = document.querySelector('input[name="outputFormat"]:checked')?.value || "single";
+
   try {
-    if (state.lastBatchRaceNames.length === 1) {
-      const raceName = state.lastBatchRaceNames[0];
-      const race = state.races.get(raceName);
-      const csv = stringifyCsv([race.header, ...race.rows]);
+    if (format === "single" || state.lastBatchRaceNames.length === 1) {
+      const races = state.lastBatchRaceNames.map((name) => state.races.get(name));
+      const header = races[0].header;
+      const allRows = races.flatMap((race) => race.rows);
+      const csv = stringifyCsv([header, ...allRows]);
       downloadBlob(
         new Blob([csv], { type: "text/csv;charset=utf-8" }),
-        `${safeFileName(raceName)}.csv`,
+        state.lastBatchRaceNames.length === 1 ? `${safeFileName(state.lastBatchRaceNames[0])}.csv` : "processed-tpv-results.csv",
       );
     } else {
       if (!window.JSZip) {
